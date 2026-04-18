@@ -1,52 +1,94 @@
 #include<iostream>
 #include<fstream>
+#include "cache_class.h"
+#include <cmath>
 
 using namespace std;
 
-class Entry {
-public:
-  Entry();
-  ~Entry();
-  void display(ofstream& outfile);
+Cache::Cache(int num_entries, int assoc) {
+  this->num_entries = num_entries;
+  this->assoc = assoc;
+  this->num_sets = num_entries / assoc;
+  this->lru_counter = 0;
 
-  void set_tag(int _tag) { tag = _tag; }
-  int get_tag() { return tag; }
+  //row is a set, column is a way;
+  entries = new Entry*[num_sets];
+  for(int i = 0; i < num_sets; i++){
+    entries[i] = new Entry[assoc];
+  }
+}
 
-  void set_valid(bool _valid) { valid = _valid; }
-  bool get_valid() { return valid; }
-
-  void set_ref(int _ref) { ref = _ref; }
-  int get_ref() { return ref; }
-
-private:  
-  bool valid;
-  unsigned tag;
-  int ref;
-};
-
-class Cache {
-public:
-  Cache(int, int);
-  ~Cache();
-
-  void display(ofstream& outfile);
+int Cache::get_index(unsigned long addr){
+  return addr % num_sets;
+}
 
 
-  int get_index(unsigned long addr);
-  int get_tag(unsigned long addr);
+int Cache::get_tag(unsigned long addr){
+  return addr >> (int)log2(num_sets);
+}
 
-  unsigned long retrieve_addr(int way, int index);
+// 2 conditions for a hit: 1) Valid bit is true 2) tag matches entry tag
+bool Cache::hit(ofstream& outfile, unsigned long addr){
+  int index = get_index(addr);
+  int tag = get_tag(addr);
+
+  for(int i = 0; i < assoc; i++){
+    if(entries[index][i].get_valid() && entries[index][i].get_tag() == tag){
+      return true;
+    }
+  }
+  return false;
+}
+
+void Cache::update(ofstream& outfile, unsigned long addr){
+  int index = get_index(addr);
+  int tag = get_tag(addr);
+
+  //check for invalid slot
+  for(int slot = 0; slot < assoc; slot++){
+    if(!entries[index][slot].get_valid()){
+      entries[index][slot].set_valid(true);
+      entries[index][slot].set_tag(tag);
+      entries[index][slot].set_ref(lru_counter);
+      lru_counter++;
+      return;
+    }
+  }
+
+  //if no invalid slot, remove LRU entry
+  int lru_victim = 0;
+  int lru_ref = entries[index][0].get_ref();
+
+  for(int slot = 1; slot < assoc; slot++){
+    if(entries[index][slot].get_ref() < lru_ref){
+      lru_victim = slot;
+      lru_ref = entries[index][slot].get_ref();
+    }
+  }
+
+  entries[index][lru_victim].set_ref(lru_counter);
+  entries[index][lru_victim].set_tag(tag);
+
+  lru_counter++;
+}
+
+Cache::~Cache(){
+  for(int i = 0; i < num_sets; i++){
+    delete[] entries[i];
+  }
+  delete[] entries;
+}
+
+Entry::Entry(){
+  valid = false;
+  tag = 0;
+  ref = 0;
+}
+
+Entry::~Entry(){
+}
+
+void Entry::display(ofstream& outfile){
   
-  bool hit(ofstream& outfile, unsigned long addr);
-
-  void update(ofstream& outfile, unsigned long addt);
-
   
-private:
-  int assoc;
-  unsigned num_entries;
-  int num_sets;
-  Entry **entries;
-};
-
-
+}
