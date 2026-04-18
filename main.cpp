@@ -51,15 +51,26 @@ int main(int argc, char*argv[]) {
   output.open(output_filename);
 
   unsigned long addr;
-  Cache cache(entries, assoc, block_size);
+
+  Cache cacheL1(entries, assoc, block_size);
+  Cache cacheL2(entries, assoc, block_size);
+
   while (input >> addr) {
-    if(cache.hit(output, addr)){
-      output << addr << " : HIT"<< endl;
+    if(cacheL1.hit(output, addr)){
+      output << addr << " : L1 : HIT"<< endl;
+    }
+    else if(cacheL2.hit(output, addr)){
+      output << addr << " : L2 : HIT"<< endl;
+      cacheL1.update(output, addr);
     }
     else{
-      output << addr << " : MISS"<< endl;
-      cache.update(output, addr);
+      output << addr << " : L1 : MISS"<< endl;
+      output << addr << " : L2 : MISS"<< endl;
+      cacheL2.update(output, addr);
+      cacheL1.update(output, addr);
+      //simulating an inclusive cache cuz i update both levels
     }
+
   }
 
   /* done reading from input file; close the stream */
