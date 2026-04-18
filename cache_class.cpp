@@ -5,11 +5,12 @@
 
 using namespace std;
 
-Cache::Cache(int num_entries, int assoc) {
+Cache::Cache(int num_entries, int assoc, int block_size){
   this->num_entries = num_entries;
   this->assoc = assoc;
   this->num_sets = num_entries / assoc;
   this->lru_counter = 0;
+  this->block_size = block_size;
 
   //row is a set, column is a way;
   entries = new Entry*[num_sets];
@@ -19,12 +20,16 @@ Cache::Cache(int num_entries, int assoc) {
 }
 
 int Cache::get_index(unsigned long addr){
-  return addr % num_sets;
+  return (addr / block_size) % num_sets;
 }
 
 
 int Cache::get_tag(unsigned long addr){
-  return addr >> (int)log2(num_sets);
+  return addr / (block_size * num_sets);
+}
+
+int Cache::get_offset(unsigned long addr){
+  return addr % block_size;
 }
 
 // 2 conditions for a hit: 1) Valid bit is true 2) tag matches entry tag
@@ -89,6 +94,6 @@ Entry::~Entry(){
 }
 
 void Entry::display(ofstream& outfile){
-  
+
   
 }

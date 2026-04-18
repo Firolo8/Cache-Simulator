@@ -27,7 +27,7 @@ private:
 
 class Cache {
 public:
-  Cache(int, int);
+  Cache(int, int, int);
   ~Cache();
 
   void display(ofstream& outfile);
@@ -35,6 +35,8 @@ public:
   
   int get_index(unsigned long addr);
   int get_tag(unsigned long addr);
+
+  int get_offset(unsigned long addr);
 
   unsigned long retrieve_addr(int way, int index);
   
@@ -48,6 +50,7 @@ private:
   unsigned num_entries;
   int num_sets;
   int lru_counter;
+  int block_size;
   Entry **entries;
 };
 

@@ -11,17 +11,18 @@ using namespace std;
   
 int main(int argc, char*argv[]) {
     /* check if the correct number of arguments have been passed; bail otherwise */
-  if (argc < 4) {
+  if (argc < 5) {
     cout << "Usage: " << endl;
-    cout << "   ./cache num_entries associativity filename" << endl;
+    cout << "   ./cachesim num_entries associativity block_size filename" << endl;
     return 0;
   }
 
  /* get args; all args come in as strings; need to convert to int with atoi() */
   unsigned entries = atoi(argv[1]);
   unsigned assoc = atoi(argv[2]);
+  unsigned block_size = atoi(argv[3]);
+  string input_filename = argv[4];
 
-  string input_filename = argv[3];
 
   /* print the args */
   cout << "Number of entries: " << entries << endl;
@@ -50,7 +51,7 @@ int main(int argc, char*argv[]) {
   output.open(output_filename);
 
   unsigned long addr;
-  Cache cache(entries, assoc);
+  Cache cache(entries, assoc, block_size);
   while (input >> addr) {
     if(cache.hit(output, addr)){
       output << addr << " : HIT"<< endl;
